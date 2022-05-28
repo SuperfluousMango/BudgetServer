@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using System.Diagnostics;
 using System.Linq;
 
 namespace BudgetServer.Data;
@@ -15,14 +16,15 @@ public class BudgetContextFactory : IDesignTimeDbContextFactory<BudgetContext>
                 .SetBasePath(path)
                 .AddJsonFile("appsettings.json");
 
-        var configFile = (args.Contains("production") || args.Contains("prod"))
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var configFile = env == "Production"
             ? "appsettings.Production.json"
             : "appsettings.Development.json";
         builder.AddJsonFile(configFile);
 
         IConfigurationRoot config = builder.Build();
 
-        string connectionString = config.GetConnectionString("BudgetDb");
+        string connectionString = config.GetConnectionString("BudgetDbMigrations");
 
         var dbContextOptionsBuilder = new DbContextOptionsBuilder<BudgetContext>();
         dbContextOptionsBuilder.UseSqlServer(connectionString);
