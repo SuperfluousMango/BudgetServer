@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using System.Diagnostics;
 using System.Linq;
 
 namespace BudgetServer.Data;
@@ -15,7 +16,8 @@ public class BudgetContextFactory : IDesignTimeDbContextFactory<BudgetContext>
                 .SetBasePath(path)
                 .AddJsonFile("appsettings.json");
 
-        var configFile = (args.Contains("production") || args.Contains("prod"))
+        var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        var configFile = env == "Production"
             ? "appsettings.Production.json"
             : "appsettings.Development.json";
         builder.AddJsonFile(configFile);
