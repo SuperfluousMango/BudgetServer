@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+    budgetserver:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image:
+            "%Docker.LocalRegistry%/budget/server:staging-%teamcity.build.branch%-%build.number%"
+        restart: always
+        ports:
+            - "%Host.ExternalPort%:443"
+        environment:
+          - ASPNETCORE_ENVIRONMENT=Production
+          - ASPNETCORE_URLS=https://+:443
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=%Sec.DevCertPassword%
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=%Sec.DevCertPath%
+        volumes:
+          - "%Sec.DevCertVolumeMapping%"
