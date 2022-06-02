@@ -6,7 +6,7 @@ services:
             context: .
             dockerfile: Dockerfile
         image:
-            %Docker.LocalRegistry%/budget/server:staging-%teamcity.build.branch%-%build.number%
+            budget/server:staging-%teamcity.build.branch%-%build.number%
         restart: always
         ports:
             - %Host.ExternalPort%:443
