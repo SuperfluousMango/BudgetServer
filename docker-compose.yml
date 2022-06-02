@@ -4,11 +4,12 @@ services:
     budgetserver:
         build:
             context: .
+            dockerfile: Dockerfile
         image:
-            "%Docker.LocalRegistry%/budget/server:staging-%teamcity.build.branch%-%build.number%"
+            %Docker.LocalRegistry%/budget/server:staging-%teamcity.build.branch%-%build.number%
         restart: always
         ports:
-            - "%Host.ExternalPort%:443"
+            - %Host.ExternalPort%:443
         environment:
           - ASPNETCORE_ENVIRONMENT=Production
           - ASPNETCORE_URLS=https://+:443
