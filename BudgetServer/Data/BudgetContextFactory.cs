@@ -22,7 +22,7 @@ public class BudgetContextFactory : IDesignTimeDbContextFactory<BudgetContext>
 
         IConfigurationRoot config = builder.Build();
 
-        string connectionString = config.GetConnectionString("BudgetDb");
+        string connectionString = config.GetConnectionString("BudgetDbMigrations");
 
         var dbContextOptionsBuilder = new DbContextOptionsBuilder<BudgetContext>();
         dbContextOptionsBuilder.UseSqlServer(connectionString);
