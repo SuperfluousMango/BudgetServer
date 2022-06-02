@@ -16,4 +16,4 @@ services:
           - ASPNETCORE_Kestrel__Certificates__Default__Password=%Sec.DevCertPassword%
           - ASPNETCORE_Kestrel__Certificates__Default__Path=%Sec.DevCertPath%
         volumes:
-          - "%Sec.DevCertSharePath%:/https:ro"
+          - %Sec.DevCertSharePath%:/https:ro
