@@ -4,7 +4,6 @@ services:
     budgetserver:
         build:
             context: .
-            dockerfile: Dockerfile
         image:
             "%Docker.LocalRegistry%/budget/server:staging-%teamcity.build.branch%-%build.number%"
         restart: always
