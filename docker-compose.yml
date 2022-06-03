@@ -2,10 +2,8 @@ version: "3.9"
 
 services:
     budgetserver:
-        build:
-            context: .
         image:
-            budget/server:staging-%teamcity.build.branch%-%build.number%
+            localhost:15000/budget/server:staging-%teamcity.build.branch%-%build.number%
         restart: always
         ports:
             - %Host.ExternalPort%:443
