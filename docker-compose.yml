@@ -1,0 +1,32 @@
+version: "3.9"
+
+networks:
+    budget:
+        name: budget
+
+services:
+    sql_server:
+        container_name: sql_server_db
+        image: mcr.microsoft.com/mssql/server@sha256:%Docker.SqlServerHash%
+        ports:
+            - "11433:1433"
+        environment:
+            SA_PASSWORD: "change_this_password"
+            ACCEPT_EULA: "Y"
+        networks:
+            - budget
+    
+    %Host.ServerName%:
+        container_name: %Host.ServerContainerName%
+        image: budget/server:%Host.ContainerTag%
+        ports: 
+            - "%Host.ServerExternalPort%:443"
+        environment:
+          - ASPNETCORE_ENVIRONMENT=Production
+          - ASPNETCORE_URLS=https://+:443
+          - ASPNETCORE_Kestrel__Certificates__Default__Password=%Sec.DevCertPassword%
+          - ASPNETCORE_Kestrel__Certificates__Default__Path=%Sec.DevCertPath%
+        volumes:
+          - %Sec.DevCertSharePath%:/https:ro
+        networks:
+            - budget
