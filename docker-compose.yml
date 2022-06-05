@@ -5,17 +5,6 @@ networks:
         name: budget
 
 services:
-    sql_server:
-        container_name: sql_server_db
-        image: mcr.microsoft.com/mssql/server@sha256:%Docker.SqlServerHash%
-        ports:
-            - "11433:1433"
-        environment:
-            SA_PASSWORD: "change_this_password"
-            ACCEPT_EULA: "Y"
-        networks:
-            - budget
-    
     %Host.ServerName%:
         container_name: %Host.ServerContainerName%
         image: budget/server:%Host.ContainerTag%
