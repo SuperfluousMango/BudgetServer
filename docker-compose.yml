@@ -8,6 +8,7 @@ services:
     %Host.ServerName%:
         container_name: %Host.ServerContainerName%
         image: budget/server:%Host.ContainerTag%
+        restart: always
         ports: 
             - "%Host.ServerExternalPort%:443"
         environment:
