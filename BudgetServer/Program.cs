@@ -30,7 +30,10 @@ void ConfigureServices(IServiceCollection services, ConfigurationManager configu
     {
         setup.AddDefaultPolicy(policy =>
         {
-            var allowedOrigins = configuration.GetSection("CorsOrigins").Get<string[]>() ?? Array.Empty<string>();
+            var allowedOrigins = (configuration.GetSection("CorsOrigins").Get<string[]>() ?? Array.Empty<string>())
+                .SelectMany(x => new string[] { x, $"http://{x}", $"https://{x}" })
+                .ToArray();
+            Console.WriteLine(string.Join('\n', allowedOrigins));
             policy.WithOrigins(allowedOrigins);
             policy.WithHeaders("Content-Type");
         });
