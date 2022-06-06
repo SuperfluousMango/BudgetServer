@@ -30,7 +30,8 @@ void ConfigureServices(IServiceCollection services, ConfigurationManager configu
     {
         setup.AddDefaultPolicy(policy =>
         {
-            policy.WithOrigins("https://localhost", "http://localhost:4200");
+            var allowedOrigins = configuration.GetSection("CorsOrigins").Get<string[]>() ?? Array.Empty<string>();
+            policy.WithOrigins(allowedOrigins);
             policy.WithHeaders("Content-Type");
         });
     });
