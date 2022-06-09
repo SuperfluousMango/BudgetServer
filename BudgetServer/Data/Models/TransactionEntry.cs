@@ -5,7 +5,7 @@ public class TransactionEntry
     public int Id { get; set; }
     public decimal Amount { get; set; }
     public string? Memo { get; set; }
-    public DateTimeOffset TransactionDate { get; set; }
+    public DateTime TransactionDate { get; set; }
     public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.Now;
 
     public int TransactionCategoryId { get; set; }

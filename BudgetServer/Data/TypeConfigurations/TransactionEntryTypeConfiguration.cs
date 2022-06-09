@@ -14,6 +14,12 @@ public class TransactionEntryTypeConfiguration : IEntityTypeConfiguration<Transa
         builder.Property(x => x.Memo)
             .HasMaxLength(100);
 
+        builder.Property(x => x.TransactionDate)
+            .HasColumnType("DATE");
+
+        builder.Property(x => x.CreatedDate)
+            .HasPrecision(0);
+
         builder.HasOne(x => x.TransactionCategory);
     }
 }
