@@ -16,23 +16,21 @@ public class TransactionEntryController : ControllerBase
     }
 
     [HttpGet("{year:int}/{month:int}")]
-    public async Task<IActionResult> Get(int year, int month, CancellationToken token)
+    public Task<List<TransactionEntry>> Get(int year, int month, CancellationToken token)
     {
         var startDate = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.Zero);
         var endDate = startDate.AddMonths(1);
 
-        var list = await _dbContext.TransactionEntries.Where(t => t.CreatedDate >= startDate && t.CreatedDate <= endDate)
+        return _dbContext.TransactionEntries.Where(t => t.CreatedDate >= startDate && t.CreatedDate <= endDate)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync(token);
-
-        return Ok(list);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id, CancellationToken token)
     {
         var transactionEntry = await _dbContext.TransactionEntries
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id, token);
         
         return transactionEntry == null
             ? NotFound()
@@ -52,7 +50,7 @@ public class TransactionEntryController : ControllerBase
             Amount = contract.Amount,
             TransactionCategoryId = contract.CategoryId,
             Memo = contract.Memo,
-            TransactionDate = contract.TransactionDate,
+            TransactionDate = contract.TransactionDate.Date,
             CreatedDate = DateTimeOffset.Now
         };
         _dbContext.TransactionEntries.Add(transactionEntry);
@@ -63,11 +61,55 @@ public class TransactionEntryController : ControllerBase
         return Created(url, transactionEntry);
     }
 
-    private bool TransactionIsValid(NewTransactionEntryContract contract)
+    [HttpGet("Recent")]
+    public Task<List<TransactionInfo>> GetRecentTransactions(CancellationToken token)
+    {
+        return _dbContext.TransactionEntries
+            .OrderByDescending(x => x.TransactionDate)
+            .ThenByDescending(x => x.CreatedDate)
+            .Take(5)
+            .Select(x => new TransactionInfo()
+                {
+                    TransactionDate = x.TransactionDate,
+                    Amount = x.Amount,
+                    Memo = x.Memo ?? $"{x.TransactionCategory.TransactionCategoryGroup.Name} – {x.TransactionCategory.Name}"
+                })
+            .ToListAsync(token);
+    }
+
+    [HttpGet("RecentGrouped/{year:int}/{month:int}")]
+    public Task<List<TransactionGroup>> GetRecentGroupedTransactions(int year, int month, CancellationToken token)
+    {
+        var startDate = new DateTimeOffset(year, month, 1, 0, 0, 0, DateTimeOffset.Now.Offset);
+        var endDate = startDate.AddMonths(1);
+
+        return _dbContext.TransactionEntries
+            .Where(tr => tr.TransactionDate >= startDate && tr.TransactionDate < endDate)
+            .GroupBy(x => x.TransactionCategory.TransactionCategoryGroup.Name)
+            .Select(x => new TransactionGroup { Name = x.Key, Total = x.Sum(tr => tr.Amount) })
+            .OrderByDescending(x => x.Total)
+            .ThenBy(x => x.Name)
+            .ToListAsync(token);
+    }
+
+    private static bool TransactionIsValid(NewTransactionEntryContract contract)
     {
         return contract != null &&
             contract.TransactionDate != default &&
             contract.Amount > 0 &&
             contract.CategoryId > 0;
+    }
+
+    public class TransactionInfo
+    {
+        public DateTimeOffset TransactionDate { get; set; }
+        public decimal Amount { get; set; }
+        public string Memo { get; set; } = "";
+    }
+
+    public class TransactionGroup
+    {
+        public string Name { get; set; } = "";
+        public decimal Total { get; set; }
     }
 }
