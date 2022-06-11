@@ -1,6 +1,6 @@
-﻿namespace BudgetServer.TransactionEntries;
+﻿namespace BudgetServer.Expenses;
 
-public class NewTransactionEntryContract
+public class NewExpenseContract
 {
     public decimal Amount { get; set; }
     public string? Memo { get; set; }

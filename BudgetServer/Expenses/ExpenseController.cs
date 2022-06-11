@@ -3,25 +3,26 @@ using BudgetServer.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace BudgetServer.TransactionEntries;
+namespace BudgetServer.Expenses;
 [Route("api/[controller]")]
+[Route("api/TransactionEntry")] // Maintain compatibility with old client expectations until it's updated
 [ApiController]
-public class TransactionEntryController : ControllerBase
+public class ExpenseController : ControllerBase
 {
     private BudgetContext _dbContext;
 
-    public TransactionEntryController(BudgetContext dbContext)
+    public ExpenseController(BudgetContext dbContext)
     {
         _dbContext = dbContext;
     }
 
     [HttpGet("{year:int}/{month:int}")]
-    public Task<List<TransactionEntry>> Get(int year, int month, CancellationToken token)
+    public Task<List<Expense>> Get(int year, int month, CancellationToken token)
     {
         var startDate = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.Zero);
         var endDate = startDate.AddMonths(1);
 
-        return _dbContext.TransactionEntries.Where(t => t.CreatedDate >= startDate && t.CreatedDate <= endDate)
+        return _dbContext.Expenses.Where(t => t.CreatedDate >= startDate && t.CreatedDate <= endDate)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync(token);
     }
@@ -29,70 +30,70 @@ public class TransactionEntryController : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id, CancellationToken token)
     {
-        var transactionEntry = await _dbContext.TransactionEntries
+        var expense = await _dbContext.Expenses
             .FirstOrDefaultAsync(t => t.Id == id, token);
         
-        return transactionEntry == null
+        return expense == null
             ? NotFound()
-            : Ok(transactionEntry);
+            : Ok(expense);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] NewTransactionEntryContract contract, CancellationToken token)
+    public async Task<IActionResult> Post([FromBody] NewExpenseContract contract, CancellationToken token)
     {
-        if (!TransactionIsValid(contract))
+        if (!ExpenseIsValid(contract))
         {
             return BadRequest();
         }
 
-        var transactionEntry = new TransactionEntry
+        var expense = new Expense
         {
             Amount = contract.Amount,
-            TransactionCategoryId = contract.CategoryId,
+            ExpenseCategoryId = contract.CategoryId,
             Memo = contract.Memo,
             TransactionDate = contract.TransactionDate.Date,
             CreatedDate = DateTimeOffset.Now
         };
-        _dbContext.TransactionEntries.Add(transactionEntry);
+        _dbContext.Expenses.Add(expense);
         await _dbContext.SaveChangesAsync(token);
 
-        var url = Url.ActionLink(action: "Get", values: new { transactionEntry.Id }) ?? "";
+        var url = Url.ActionLink(action: "Get", values: new { expense.Id }) ?? "";
 
-        return Created(url, transactionEntry);
+        return Created(url, expense);
     }
 
     [HttpGet("Recent")]
-    public Task<List<TransactionInfo>> GetRecentTransactions(CancellationToken token)
+    public Task<List<ExpenseInfo>> GetRecentExpenses(CancellationToken token)
     {
-        return _dbContext.TransactionEntries
+        return _dbContext.Expenses
             .OrderByDescending(x => x.TransactionDate)
             .ThenByDescending(x => x.CreatedDate)
             .Take(5)
-            .Select(x => new TransactionInfo()
+            .Select(x => new ExpenseInfo()
                 {
                     TransactionDate = x.TransactionDate,
                     Amount = x.Amount,
-                    Memo = x.Memo ?? $"{x.TransactionCategory.TransactionCategoryGroup.Name} – {x.TransactionCategory.Name}"
+                    Memo = x.Memo ?? $"{x.ExpenseCategory.ExpenseCategoryGroup.Name} – {x.ExpenseCategory.Name}"
                 })
             .ToListAsync(token);
     }
 
     [HttpGet("RecentGrouped/{year:int}/{month:int}")]
-    public Task<List<TransactionGroup>> GetRecentGroupedTransactions(int year, int month, CancellationToken token)
+    public Task<List<ExpenseGroup>> GetRecentGroupedExpenses(int year, int month, CancellationToken token)
     {
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
-        return _dbContext.TransactionEntries
+        return _dbContext.Expenses
             .Where(tr => tr.TransactionDate >= startDate && tr.TransactionDate < endDate)
-            .GroupBy(x => x.TransactionCategory.TransactionCategoryGroup.Name)
-            .Select(x => new TransactionGroup { Name = x.Key, Total = x.Sum(tr => tr.Amount) })
+            .GroupBy(x => x.ExpenseCategory.ExpenseCategoryGroup.Name)
+            .Select(x => new ExpenseGroup { Name = x.Key, Total = x.Sum(tr => tr.Amount) })
             .OrderByDescending(x => x.Total)
             .ThenBy(x => x.Name)
             .ToListAsync(token);
     }
 
-    private static bool TransactionIsValid(NewTransactionEntryContract contract)
+    private static bool ExpenseIsValid(NewExpenseContract contract)
     {
         return contract != null &&
             contract.TransactionDate != default &&
@@ -100,14 +101,14 @@ public class TransactionEntryController : ControllerBase
             contract.CategoryId > 0;
     }
 
-    public class TransactionInfo
+    public class ExpenseInfo
     {
         public DateTimeOffset TransactionDate { get; set; }
         public decimal Amount { get; set; }
         public string Memo { get; set; } = "";
     }
 
-    public class TransactionGroup
+    public class ExpenseGroup
     {
         public string Name { get; set; } = "";
         public decimal Total { get; set; }

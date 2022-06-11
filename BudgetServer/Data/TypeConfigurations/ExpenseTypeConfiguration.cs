@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BudgetServer.Data.TypeConfigurations;
 
-public class TransactionEntryTypeConfiguration : IEntityTypeConfiguration<TransactionEntry>
+public class ExpenseTypeConfiguration : IEntityTypeConfiguration<Expense>
 {
-    public void Configure(EntityTypeBuilder<TransactionEntry> builder)
+    public void Configure(EntityTypeBuilder<Expense> builder)
     {
         builder.Property(x => x.Amount)
             .HasColumnType("decimal(7,2)");
@@ -20,6 +20,6 @@ public class TransactionEntryTypeConfiguration : IEntityTypeConfiguration<Transa
         builder.Property(x => x.CreatedDate)
             .HasPrecision(0);
 
-        builder.HasOne(x => x.TransactionCategory);
+        builder.HasOne(x => x.ExpenseCategory);
     }
 }

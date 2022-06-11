@@ -1,6 +1,6 @@
 ﻿namespace BudgetServer.Data.Models;
 
-public class TransactionEntry
+public class Expense
 {
     public int Id { get; set; }
     public decimal Amount { get; set; }
@@ -8,6 +8,6 @@ public class TransactionEntry
     public DateTime TransactionDate { get; set; }
     public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.Now;
 
-    public int TransactionCategoryId { get; set; }
-    public TransactionCategory TransactionCategory { get; set; }
+    public int ExpenseCategoryId { get; set; }
+    public ExpenseCategory ExpenseCategory { get; set; }
 }

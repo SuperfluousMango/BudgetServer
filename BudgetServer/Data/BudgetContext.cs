@@ -10,9 +10,9 @@ public class BudgetContext : DbContext
     {
     }
 
-    public DbSet<TransactionEntry> TransactionEntries => Set<TransactionEntry>();
-    public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();
-    public DbSet<TransactionCategoryGroup> TransactionCategoryGroups => Set<TransactionCategoryGroup>();
+    public DbSet<Expense> Expenses => Set<Expense>();
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+    public DbSet<ExpenseCategoryGroup> ExpenseCategoryGroups => Set<ExpenseCategoryGroup>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

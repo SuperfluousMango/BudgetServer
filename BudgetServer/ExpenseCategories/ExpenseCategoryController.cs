@@ -4,14 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
-namespace BudgetServer.TransactionCategories;
+namespace BudgetServer.ExpenseCategories;
 [Route("api/[controller]")]
+[Route("api/TransactionCategory")] // Maintain compatibility with old client expectations until it's updated
 [ApiController]
-public class TransactionCategoryController : ControllerBase
+public class ExpenseCategoryController : ControllerBase
 {
     private readonly BudgetContext _budgetContext;
 
-    public TransactionCategoryController(BudgetContext budgetContext)
+    public ExpenseCategoryController(BudgetContext budgetContext)
     {
         _budgetContext = budgetContext;
     }
@@ -19,13 +20,14 @@ public class TransactionCategoryController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetCategories(CancellationToken token)
     {
-        var groupedCategories = await _budgetContext.TransactionCategories
-            .Include(c => c.TransactionCategoryGroup)
-            .GroupBy(c => c.TransactionCategoryGroup.Name)
-            .Select(g => new {
+        var groupedCategories = await _budgetContext.ExpenseCategories
+            .Include(c => c.ExpenseCategoryGroup)
+            .GroupBy(c => c.ExpenseCategoryGroup.Name)
+            .Select(g => new
+            {
                 Name = g.Key,
                 Categories = g.Select(
-                    c => new TransactionCategoryDisplayContract { Id = c.Id, Name = c.Name, DisplayName = $"{g.Key} – {c.Name}" }
+                    c => new ExpenseCategoryDisplayContract { Id = c.Id, Name = c.Name, DisplayName = $"{g.Key} – {c.Name}" }
                 )
                 .OrderBy(c => c.Name)
                 .ToList()
@@ -44,27 +46,27 @@ public class TransactionCategoryController : ControllerBase
             return BadRequest();
         }
 
-        var group = await _budgetContext.TransactionCategoryGroups
-            .Include(x => x.TransactionCategories)
+        var group = await _budgetContext.ExpenseCategoryGroups
+            .Include(x => x.ExpenseCategories)
             .FirstOrDefaultAsync(x => x.Name.ToLower() == contract.GroupName.ToLower(), token);
 
-        if (group != null && group.TransactionCategories.Any(x => x.Name.ToLower() == contract.CategoryName.ToLower()))
+        if (group != null && group.ExpenseCategories.Any(x => x.Name.ToLower() == contract.CategoryName.ToLower()))
         {
             return BadRequest();
         }
 
         if (group == null)
         {
-            group = new TransactionCategoryGroup { Name = GetTitleCase(contract.GroupName) };
-            _budgetContext.TransactionCategoryGroups.Add(group);
+            group = new ExpenseCategoryGroup { Name = GetTitleCase(contract.GroupName) };
+            _budgetContext.ExpenseCategoryGroups.Add(group);
         }
 
-        var category = new TransactionCategory
+        var category = new ExpenseCategory
         {
             Name = GetTitleCase(contract.CategoryName),
-            TransactionCategoryGroup = group
+            ExpenseCategoryGroup = group
         };
-        _budgetContext.TransactionCategories.Add(category);
+        _budgetContext.ExpenseCategories.Add(category);
         await _budgetContext.SaveChangesAsync(token);
 
         return NoContent();
@@ -80,7 +82,7 @@ public class TransactionCategoryController : ControllerBase
             .Replace(" Or ", " or ");
     }
 
-    private class TransactionCategoryDisplayContract
+    private class ExpenseCategoryDisplayContract
     {
         public int Id { get; set; }
         public string Name { get; set; }
