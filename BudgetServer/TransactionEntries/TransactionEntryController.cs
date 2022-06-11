@@ -80,7 +80,7 @@ public class TransactionEntryController : ControllerBase
     [HttpGet("RecentGrouped/{year:int}/{month:int}")]
     public Task<List<TransactionGroup>> GetRecentGroupedTransactions(int year, int month, CancellationToken token)
     {
-        var startDate = new DateTimeOffset(year, month, 1, 0, 0, 0, DateTimeOffset.Now.Offset);
+        var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
         return _dbContext.TransactionEntries
