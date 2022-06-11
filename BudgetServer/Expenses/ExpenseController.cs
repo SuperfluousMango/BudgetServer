@@ -19,10 +19,10 @@ public class ExpenseController : ControllerBase
     [HttpGet("{year:int}/{month:int}")]
     public Task<List<Expense>> Get(int year, int month, CancellationToken token)
     {
-        var startDate = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
-        return _dbContext.Expenses.Where(t => t.CreatedDate >= startDate && t.CreatedDate <= endDate)
+        return _dbContext.Expenses.Where(t => t.TransactionDate >= startDate && t.TransactionDate <= endDate)
             .OrderByDescending(t => t.TransactionDate)
             .ToListAsync(token);
     }
@@ -103,7 +103,7 @@ public class ExpenseController : ControllerBase
 
     public class ExpenseInfo
     {
-        public DateTimeOffset TransactionDate { get; set; }
+        public DateTime TransactionDate { get; set; }
         public decimal Amount { get; set; }
         public string Memo { get; set; } = "";
     }
