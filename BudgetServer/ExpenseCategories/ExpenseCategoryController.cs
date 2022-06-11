@@ -6,7 +6,6 @@ using System.Globalization;
 
 namespace BudgetServer.ExpenseCategories;
 [Route("api/[controller]")]
-[Route("api/TransactionCategory")] // Maintain compatibility with old client expectations until it's updated
 [ApiController]
 public class ExpenseCategoryController : ControllerBase
 {
