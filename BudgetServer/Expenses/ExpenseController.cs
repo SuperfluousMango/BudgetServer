@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetServer.Expenses;
 [Route("api/[controller]")]
-[Route("api/TransactionEntry")] // Maintain compatibility with old client expectations until it's updated
 [ApiController]
 public class ExpenseController : ControllerBase
 {
