@@ -34,6 +34,7 @@ void ConfigureServices(IServiceCollection services, ConfigurationManager configu
             var allowedOrigins = (configuration.GetSection("CorsOrigins").Get<string[]>() ?? Array.Empty<string>())
                 .SelectMany(x => new string[] { x, $"http://{x}", $"https://{x}" })
                 .ToArray();
+            policy.WithMethods("GET", "POST", "PUT", "DELETE");
             policy.WithOrigins(allowedOrigins);
             policy.WithHeaders("Content-Type");
         });
