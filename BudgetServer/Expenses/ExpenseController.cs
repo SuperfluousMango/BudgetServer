@@ -64,7 +64,7 @@ public class ExpenseController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Put([FromBody] ExpenseContract contract, CancellationToken token)
     {
-        if (contract == null || contract?.Id == 0 || !ExpenseIsValid(contract))
+        if (contract == null || contract?.Id <= 0 || !ExpenseIsValid(contract!))
         {
             return BadRequest();
         }
@@ -75,10 +75,30 @@ public class ExpenseController : ControllerBase
             return NotFound();
         }
 
-        expense.Amount = contract!.Amount;
+        expense.Amount = contract.Amount;
         expense.ExpenseCategoryId = contract.CategoryId;
         expense.Memo = contract.Memo;
         expense.TransactionDate = contract.TransactionDate;
+        await _dbContext.SaveChangesAsync(token);
+
+        return Ok();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken token)
+    {
+        if (id <= 0)
+        {
+            return BadRequest();
+        }
+
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(x => x.Id == id, token);
+        if (expense == null)
+        {
+            return NotFound();
+        }
+
+        _dbContext.Expenses.Remove(expense);
         await _dbContext.SaveChangesAsync(token);
 
         return Ok();
@@ -116,7 +136,7 @@ public class ExpenseController : ControllerBase
             .ToListAsync(token);
     }
 
-    private static bool ExpenseIsValid(ExpenseContract? contract)
+    private static bool ExpenseIsValid(ExpenseContract contract)
     {
         return contract.TransactionDate != default &&
             contract.Amount > 0 &&
