@@ -38,9 +38,9 @@ public class ExpenseController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] NewExpenseContract contract, CancellationToken token)
+    public async Task<IActionResult> Post([FromBody] ExpenseContract contract, CancellationToken token)
     {
-        if (!ExpenseIsValid(contract))
+        if (contract == null || contract?.Id != 0 || !ExpenseIsValid(contract))
         {
             return BadRequest();
         }
@@ -61,6 +61,29 @@ public class ExpenseController : ControllerBase
         return Created(url, expense);
     }
 
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Put([FromBody] ExpenseContract contract, CancellationToken token)
+    {
+        if (contract == null || contract?.Id == 0 || !ExpenseIsValid(contract))
+        {
+            return BadRequest();
+        }
+
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(x => x.Id == contract!.Id, token);
+        if (expense == null)
+        {
+            return NotFound();
+        }
+
+        expense.Amount = contract!.Amount;
+        expense.ExpenseCategoryId = contract.CategoryId;
+        expense.Memo = contract.Memo;
+        expense.TransactionDate = contract.TransactionDate;
+        await _dbContext.SaveChangesAsync(token);
+
+        return Ok();
+    }
+
     [HttpGet("Recent")]
     public Task<List<ExpenseInfo>> GetRecentExpenses(CancellationToken token)
     {
@@ -70,6 +93,7 @@ public class ExpenseController : ControllerBase
             .Take(5)
             .Select(x => new ExpenseInfo()
                 {
+                    Id = x.Id,
                     TransactionDate = x.TransactionDate,
                     Amount = x.Amount,
                     Memo = x.Memo ?? $"{x.ExpenseCategory.ExpenseCategoryGroup.Name} – {x.ExpenseCategory.Name}"
@@ -92,16 +116,16 @@ public class ExpenseController : ControllerBase
             .ToListAsync(token);
     }
 
-    private static bool ExpenseIsValid(NewExpenseContract contract)
+    private static bool ExpenseIsValid(ExpenseContract? contract)
     {
-        return contract != null &&
-            contract.TransactionDate != default &&
+        return contract.TransactionDate != default &&
             contract.Amount > 0 &&
             contract.CategoryId > 0;
     }
 
     public class ExpenseInfo
     {
+        public int Id { get; set; }
         public DateTime TransactionDate { get; set; }
         public decimal Amount { get; set; }
         public string Memo { get; set; } = "";
