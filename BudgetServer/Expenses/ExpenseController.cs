@@ -21,8 +21,8 @@ public class ExpenseController : ControllerBase
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
-        return _dbContext.Expenses.Where(t => t.TransactionDate >= startDate && t.TransactionDate <= endDate)
-            .OrderByDescending(t => t.TransactionDate)
+        return _dbContext.Expenses.Where(e => e.TransactionDate >= startDate && e.TransactionDate <= endDate)
+            .OrderByDescending(e => e.TransactionDate)
             .ToListAsync(token);
     }
 
@@ -30,7 +30,7 @@ public class ExpenseController : ControllerBase
     public async Task<IActionResult> Get(int id, CancellationToken token)
     {
         var expense = await _dbContext.Expenses
-            .FirstOrDefaultAsync(t => t.Id == id, token);
+            .FirstOrDefaultAsync(e => e.Id == id, token);
         
         return expense == null
             ? NotFound()
@@ -69,13 +69,13 @@ public class ExpenseController : ControllerBase
             return BadRequest();
         }
 
-        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(x => x.Id == contract!.Id, token);
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == contract!.Id, token);
         if (expense == null)
         {
             return NotFound();
         }
 
-        expense.Amount = contract.Amount;
+        expense.Amount = contract!.Amount;
         expense.ExpenseCategoryId = contract.CategoryId;
         expense.Memo = contract.Memo;
         expense.TransactionDate = contract.TransactionDate;
@@ -92,7 +92,7 @@ public class ExpenseController : ControllerBase
             return BadRequest();
         }
 
-        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(x => x.Id == id, token);
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == id, token);
         if (expense == null)
         {
             return NotFound();
@@ -111,28 +111,44 @@ public class ExpenseController : ControllerBase
             .OrderByDescending(x => x.TransactionDate)
             .ThenByDescending(x => x.CreatedDate)
             .Take(5)
-            .Select(x => new ExpenseInfo()
+            .Select(e => new ExpenseInfo()
                 {
-                    Id = x.Id,
-                    TransactionDate = x.TransactionDate,
-                    Amount = x.Amount,
-                    Memo = x.Memo ?? $"{x.ExpenseCategory.ExpenseCategoryGroup.Name} – {x.ExpenseCategory.Name}"
+                    Id = e.Id,
+                    TransactionDate = e.TransactionDate,
+                    Amount = e.Amount,
+                    Memo = e.Memo ?? $"{e.ExpenseCategory.ExpenseCategoryGroup.Name} – {e.ExpenseCategory.Name}"
                 })
             .ToListAsync(token);
     }
 
-    [HttpGet("RecentGrouped/{year:int}/{month:int}")]
-    public Task<List<ExpenseGroup>> GetRecentGroupedExpenses(int year, int month, CancellationToken token)
+    [HttpGet("RecentByGroup/{year:int}/{month:int}")]
+    [HttpGet("RecentGrouped/{year:int}/{month:int}")] // Backwards compatibility
+    public Task<List<ExpensesByCategoryGroup>> GetRecentGroupedExpenses(int year, int month, CancellationToken token)
     {
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
         return _dbContext.Expenses
-            .Where(tr => tr.TransactionDate >= startDate && tr.TransactionDate < endDate)
-            .GroupBy(x => x.ExpenseCategory.ExpenseCategoryGroup.Name)
-            .Select(x => new ExpenseGroup { Name = x.Key, Total = x.Sum(tr => tr.Amount) })
-            .OrderByDescending(x => x.Total)
-            .ThenBy(x => x.Name)
+            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate)
+            .GroupBy(e => new { Id = e.ExpenseCategory.ExpenseCategoryGroupId, Name = e.ExpenseCategory.ExpenseCategoryGroup.Name })
+            .Select(g => new ExpensesByCategoryGroup { Id = g.Key.Id, Name = g.Key.Name, Total = g.Sum(tr => tr.Amount) })
+            .OrderByDescending(g => g.Total)
+            .ThenBy(g => g.Name)
+            .ToListAsync(token);
+    }
+
+    [HttpGet("RecentByCategory/{year:int}/{month:int}/{categoryGroupId:int}")]
+    public Task<List<ExpensesByCategory>> GetRecentExpensesByCategoryGroup(int year, int month, int categoryGroupId, CancellationToken token)
+    {
+        var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endDate = startDate.AddMonths(1);
+
+        return _dbContext.Expenses
+            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate && e.ExpenseCategory.ExpenseCategoryGroupId == categoryGroupId)
+            .GroupBy(e => new { Id = e.ExpenseCategoryId, Name = e.ExpenseCategory.Name })
+            .Select(g => new ExpensesByCategory { Id = g.Key.Id, Name = g.Key.Name, Total = g.Sum(e => e.Amount) })
+            .OrderByDescending(g => g.Total)
+            .ThenBy(g => g.Name)
             .ToListAsync(token);
     }
 
@@ -151,8 +167,16 @@ public class ExpenseController : ControllerBase
         public string Memo { get; set; } = "";
     }
 
-    public class ExpenseGroup
+    public class ExpensesByCategoryGroup
     {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public decimal Total { get; set; }
+    }
+
+    public class ExpensesByCategory
+    {
+        public int Id { get; set; }
         public string Name { get; set; } = "";
         public decimal Total { get; set; }
     }
