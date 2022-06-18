@@ -9,6 +9,8 @@ namespace BudgetServer.ExpenseCategories;
 [ApiController]
 public class ExpenseCategoryController : ControllerBase
 {
+    private const char EN_DASH = '–';
+    
     private readonly BudgetContext _budgetContext;
 
     public ExpenseCategoryController(BudgetContext budgetContext)
@@ -26,7 +28,7 @@ public class ExpenseCategoryController : ControllerBase
             {
                 Name = g.Key,
                 Categories = g.Select(
-                    c => new ExpenseCategoryDisplayContract { Id = c.Id, Name = c.Name, DisplayName = $"{g.Key} – {c.Name}" }
+                    c => new ExpenseCategoryDisplayContract { Id = c.Id, Name = c.Name, DisplayName = g.Key == c.Name ? g.Key : $"{g.Key} {EN_DASH} {c.Name}" }
                 )
                 .OrderBy(c => c.Name)
                 .ToList()

@@ -8,6 +8,8 @@ namespace BudgetServer.Expenses;
 [ApiController]
 public class ExpenseController : ControllerBase
 {
+    private const char EN_DASH = '–';
+
     private BudgetContext _dbContext;
 
     public ExpenseController(BudgetContext dbContext)
@@ -116,8 +118,11 @@ public class ExpenseController : ControllerBase
                     Id = e.Id,
                     TransactionDate = e.TransactionDate,
                     Amount = e.Amount,
-                    Memo = e.Memo ?? $"{e.ExpenseCategory.ExpenseCategoryGroup.Name} – {e.ExpenseCategory.Name}"
-                })
+                    Memo = e.Memo ??
+                        (e.ExpenseCategory.ExpenseCategoryGroup.Name == e.ExpenseCategory.Name
+                            ? e.ExpenseCategory.Name
+                            : $"{e.ExpenseCategory.ExpenseCategoryGroup.Name} {EN_DASH} {e.ExpenseCategory.Name}")
+            })
             .ToListAsync(token);
     }
 
