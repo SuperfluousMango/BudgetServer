@@ -20,6 +20,9 @@ public class ExpenseTypeConfiguration : IEntityTypeConfiguration<Expense>
         builder.Property(x => x.CreatedDate)
             .HasPrecision(0);
 
+        builder.Property(x => x.IsDeleted)
+            .HasDefaultValue(false);
+
         builder.HasOne(x => x.ExpenseCategory);
     }
 }
