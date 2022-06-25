@@ -17,14 +17,19 @@ public class ExpenseController : ControllerBase
         _dbContext = dbContext;
     }
 
-    [HttpGet("{year:int}/{month:int}")]
-    public Task<List<Expense>> Get(int year, int month, CancellationToken token)
+    [HttpGet("{year:int}/{month:int}/{categoryId:int?}")]
+    public Task<List<Expense>> Get(int year, int month, int? categoryId, CancellationToken token)
     {
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
-        return _dbContext.Expenses.Where(e => e.TransactionDate >= startDate && e.TransactionDate <= endDate && !e.IsDeleted)
-            .OrderByDescending(e => e.TransactionDate)
+        var query = _dbContext.Expenses.Where(e => e.TransactionDate >= startDate && e.TransactionDate <= endDate && !e.IsDeleted);
+        if (categoryId.HasValue)
+        {
+            query = query.Where(e => e.ExpenseCategoryId == categoryId.Value);
+        }
+
+        return query.OrderByDescending(e => e.TransactionDate)
             .ToListAsync(token);
     }
 
