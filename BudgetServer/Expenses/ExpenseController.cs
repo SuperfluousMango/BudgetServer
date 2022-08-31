@@ -45,11 +45,31 @@ public class ExpenseController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] ExpenseContract contract, CancellationToken token)
+    public async Task<IActionResult> Post([FromBody] ExpenseContract contract, CancellationToken token, [FromQuery] bool ignoreDuplicates = false)
     {
         if (contract == null || contract?.Id != 0 || !ExpenseIsValid(contract))
         {
             return BadRequest();
+        }
+
+        if (!ignoreDuplicates)
+        {
+            // If we have an identical expense within a week of this expense, alert the user
+            var existingExpense = await _dbContext.Expenses
+                .Where(
+                    e => e.Amount == contract.Amount && e.ExpenseCategoryId == contract.CategoryId &&
+                    Math.Abs(EF.Functions.DateDiffDay(e.TransactionDate, contract.TransactionDate)) < 7
+                )
+                .Select(e => new { e.TransactionDate, e.CreatedDate })
+                .FirstOrDefaultAsync(token);
+            if (existingExpense != null) {
+                return Conflict(new
+                {
+                    ExistingDate = existingExpense.TransactionDate,
+                    CreatedDate = existingExpense.CreatedDate,
+                    DuplicateData = contract
+                });
+            }
         }
 
         var expense = new Expense
