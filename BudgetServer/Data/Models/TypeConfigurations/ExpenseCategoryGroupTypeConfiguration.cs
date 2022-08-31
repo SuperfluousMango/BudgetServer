@@ -1,8 +1,7 @@
-﻿using BudgetServer.Data.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace BudgetServer.Data.TypeConfigurations;
+namespace BudgetServer.Data.Models.TypeConfigurations;
 
 public class ExpenseCategoryGroupTypeConfiguration : IEntityTypeConfiguration<ExpenseCategoryGroup>
 {

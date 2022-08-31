@@ -23,7 +23,7 @@ public class ExpenseController : ControllerBase
         var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(1);
 
-        var query = _dbContext.Expenses.Where(e => e.TransactionDate >= startDate && e.TransactionDate <= endDate && !e.IsDeleted);
+        var query = _dbContext.Expenses.Where(e => e.TransactionDate >= startDate && e.TransactionDate <= endDate);
         if (categoryId.HasValue)
         {
             query = query.Where(e => e.ExpenseCategoryId == categoryId.Value);
@@ -37,7 +37,7 @@ public class ExpenseController : ControllerBase
     public async Task<IActionResult> Get(int id, CancellationToken token)
     {
         var expense = await _dbContext.Expenses
-            .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, token);
+            .FirstOrDefaultAsync(e => e.Id == id, token);
         
         return expense == null
             ? NotFound()
@@ -76,7 +76,7 @@ public class ExpenseController : ControllerBase
             return BadRequest();
         }
 
-        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == contract!.Id && !e.IsDeleted, token);
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == contract!.Id, token);
         if (expense == null)
         {
             return NotFound();
@@ -99,7 +99,7 @@ public class ExpenseController : ControllerBase
             return BadRequest();
         }
 
-        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, token);
+        var expense = await _dbContext.Expenses.FirstOrDefaultAsync(e => e.Id == id, token);
         if (expense == null)
         {
             return NotFound();
@@ -115,7 +115,6 @@ public class ExpenseController : ControllerBase
     public Task<List<ExpenseInfo>> GetRecentExpenses(CancellationToken token)
     {
         return _dbContext.Expenses
-            .Where(e => !e.IsDeleted)
             .OrderByDescending(x => x.TransactionDate)
             .ThenByDescending(x => x.CreatedDate)
             .Take(5)
@@ -140,7 +139,7 @@ public class ExpenseController : ControllerBase
         var endDate = startDate.AddMonths(1);
 
         return _dbContext.Expenses
-            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate && !e.IsDeleted)
+            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate)
             .GroupBy(e => new { Id = e.ExpenseCategory.ExpenseCategoryGroupId, Name = e.ExpenseCategory.ExpenseCategoryGroup.Name })
             .Select(g => new ExpensesByCategoryGroup { Id = g.Key.Id, Name = g.Key.Name, Total = g.Sum(tr => tr.Amount) })
             .OrderByDescending(g => g.Total)
@@ -155,7 +154,7 @@ public class ExpenseController : ControllerBase
         var endDate = startDate.AddMonths(1);
 
         return _dbContext.Expenses
-            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate && e.ExpenseCategory.ExpenseCategoryGroupId == categoryGroupId && !e.IsDeleted)
+            .Where(e => e.TransactionDate >= startDate && e.TransactionDate < endDate && e.ExpenseCategory.ExpenseCategoryGroupId == categoryGroupId)
             .GroupBy(e => new { Id = e.ExpenseCategoryId, Name = e.ExpenseCategory.Name })
             .Select(g => new ExpensesByCategory { Id = g.Key.Id, Name = g.Key.Name, Total = g.Sum(e => e.Amount) })
             .OrderByDescending(g => g.Total)
