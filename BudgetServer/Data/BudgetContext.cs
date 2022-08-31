@@ -10,6 +10,7 @@ public class BudgetContext : DbContext
     {
     }
 
+    // Tables
     public DbSet<Expense> Expenses => Set<Expense>();
     public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
     public DbSet<ExpenseCategoryGroup> ExpenseCategoryGroups => Set<ExpenseCategoryGroup>();
@@ -23,5 +24,13 @@ public class BudgetContext : DbContext
         {
             modelBuilder.Entity(entityType.ClrType).ToTable(entityType.ClrType.Name);
         }
+
+        AddQueryFilters(modelBuilder);
+    }
+
+    private static void AddQueryFilters(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Expense>()
+            .HasQueryFilter(x => !x.IsDeleted);
     }
 }
